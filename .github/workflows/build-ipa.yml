@@ -1,0 +1,63 @@
+name: Build iOS IPA (NoMac)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build unsigned IPA on cloud macOS
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer || true
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Resolve package dependencies
+        run: xcodebuild -resolvePackageDependencies -project NoMacDemo.xcodeproj -scheme NoMacDemo
+        continue-on-error: true
+
+      - name: Archive (no code signing)
+        run: |
+          xcodebuild archive \
+            -project NoMacDemo.xcodeproj \
+            -scheme NoMacDemo \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/NoMacDemo.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            ENABLE_BITCODE=NO
+
+      - name: Package unsigned .app into .ipa
+        run: |
+          APP_PATH="build/NoMacDemo.xcarchive/Products/Applications/NoMacDemo.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App not found at $APP_PATH"
+            find build/NoMacDemo.xcarchive -name "*.app" -type d
+            exit 1
+          fi
+          mkdir -p build/ipa/Payload
+          cp -R "$APP_PATH" build/ipa/Payload/
+          # Remove code signature so it can be re-signed by sideloading tools
+          rm -rf build/ipa/Payload/NoMacDemo.app/_CodeSignature
+          cd build/ipa
+          zip -qr NoMacDemo-unsigned.ipa Payload
+          cd ../..
+          ls -lh build/ipa/NoMacDemo-unsigned.ipa
+          echo "IPA contents:"
+          unzip -l build/ipa/NoMacDemo-unsigned.ipa | head -20
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NoMacDemo-unsigned.ipa
+          path: build/ipa/NoMacDemo-unsigned.ipa
+          if-no-files-found: error
