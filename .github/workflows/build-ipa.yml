@@ -46,7 +46,7 @@ jobs:
 
       - name: Package unsigned .app into .ipa
         run: |
-          APP_PATH="build/Release-iphoneos/NoMacDemo.app"
+          APP_PATH="build/NoMacDemo.app"
           if [ ! -d "$APP_PATH" ]; then
             echo "App not found at $APP_PATH"
             find build -name "*.app" -type d
