@@ -23,28 +23,27 @@ jobs:
         run: xcodebuild -resolvePackageDependencies -project NoMacDemo.xcodeproj -scheme NoMacDemo
         continue-on-error: true
 
-      - name: Archive (no code signing)
+      - name: Build (no code signing)
         run: |
-          xcodebuild archive \
+          xcodebuild build \
             -project NoMacDemo.xcodeproj \
             -scheme NoMacDemo \
             -configuration Release \
             -sdk iphoneos \
             -destination "generic/platform=iOS" \
-            -archivePath build/NoMacDemo.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             ENABLE_BITCODE=NO \
-            ASSETCATALOG_COMPILER_SKIP_VALIDATION=YES \
-            ASSETCATALOG_COMPILER_SKIP_VALIDATION_FOR_ARCHIVE=YES
+            ONLY_ACTIVE_ARCH=NO \
+            CONFIGURATION_BUILD_DIR=build
 
       - name: Package unsigned .app into .ipa
         run: |
-          APP_PATH="build/NoMacDemo.xcarchive/Products/Applications/NoMacDemo.app"
+          APP_PATH="build/Release-iphoneos/NoMacDemo.app"
           if [ ! -d "$APP_PATH" ]; then
             echo "App not found at $APP_PATH"
-            find build/NoMacDemo.xcarchive -name "*.app" -type d
+            find build -name "*.app" -type d
             exit 1
           fi
           mkdir -p build/ipa/Payload
