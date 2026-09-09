@@ -30,11 +30,14 @@ jobs:
             -scheme NoMacDemo \
             -configuration Release \
             -sdk iphoneos \
+            -destination "generic/platform=iOS" \
             -archivePath build/NoMacDemo.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            ENABLE_BITCODE=NO
+            ENABLE_BITCODE=NO \
+            ASSETCATALOG_COMPILER_SKIP_VALIDATION=YES \
+            ASSETCATALOG_COMPILER_SKIP_VALIDATION_FOR_ARCHIVE=YES
 
       - name: Package unsigned .app into .ipa
         run: |
